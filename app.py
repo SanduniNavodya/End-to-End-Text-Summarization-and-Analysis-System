@@ -1,84 +1,95 @@
 import sys
 import os
-import streamlit as st
-from textSummarizer.pipeline.prediction import PredictionPipeline
 
 # Add the path to the src folder containing textSummarizer
 sys.path.append(os.path.abspath('src'))
 
-# Set up the page configuration for a full-screen layout
+import streamlit as st
+from textSummarizer.pipeline.prediction import PredictionPipeline
+
+# Set up the page configuration for full-screen layout
 st.set_page_config(page_title="Text Summarizer", layout="wide")
 
-# Custom CSS for styling the page
+# Custom CSS for styling
 st.markdown("""
     <style>
-        /* Full screen and centered content */
-        .css-ffhzg2 {
-            max-width: 100% !important;
-            width: 100%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-        }
-
-        /* Title and header styling */
+        /* Title styling */
         h1 {
-            font-size: 4rem;
+            text-align: center;
             color: #4CAF50;
-            font-weight: 700;
-            text-align: center;
+            font-size: 3rem;
+            margin-bottom: 20px;
         }
 
-        /* Custom description styling */
+        /* Centered description */
         .description {
-            font-size: 1.2rem;
-            color: #333;
-            margin-bottom: 20px;
             text-align: center;
+            font-size: 1.5rem;
+            color: rgba(127, 140, 141, 0.8); 
+            font-weight: semi-bold; 
+            margin-bottom: 30px;
         }
 
-        /* Styling for input area */
-        .stTextInput, .stTextArea {
-            font-size: 1.2rem;
-            padding: 10px;
-            border-radius: 8px;
-            border: 2px solid #4CAF50;
+        /* Text area styling */
+        textarea {
             width: 100%;
-            max-width: 800px;
-            margin-bottom: 20px;
+            height: 300px !important;
+            font-size: 1.2rem;
+            border: 2px solid #2ECC71;
+            border-radius: 8px;
+            padding: 15px;
+            background: #F4F6F7;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Output box styling */
+        .output-box {
+            width: 100%;
+            height: 300px;
+            font-size: 1.2rem;
+            border: 2px solid #2ECC71;
+            border-radius: 8px;
+            padding: 15px;
+            background: #ECF0F1;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            overflow-y: auto;
+            color: #2C3E50;
+            margin-top: 27px; /* Adds space before the box */
         }
 
         /* Button styling */
-        .stButton {
-            background-color: #4CAF50;
-            color: white;
+        .stButton button {
+            background-color: #4CAF50 !important;
+            color: white !important;
             padding: 10px 20px;
-            border-radius: 8px;
+            border-radius: 8px !important;
             font-size: 1.2rem;
-            width: 100%;
-            max-width: 200px;
-            margin: 20px auto;
+            cursor: pointer;
+            
         }
 
-        /* Styling for the output box */
-        .output {
-            font-size: 1.2rem;
-            color: #555;
-            background-color: #f9f9f9;
-            padding: 20px;
-            border-radius: 8px;
-            max-width: 800px;
-            margin: 20px auto;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        /* Center button at the bottom */
+        .center-button {
+            display: flex;
+            justify-content: center;
+            position: fixed;
+            left: 0;
+            right: 0;
+            bottom: 20px; /* Adjust as needed for spacing from the bottom */
+            padding: 10px;
+            background-color: transparent;
+            
         }
 
-        /* Warning and error styling */
+        .stButton button:hover {
+            background-color: #45A049 !important;
+        }
+
+        /* Warning and error messages */
         .stWarning, .stError {
-            font-size: 1.2rem;
             text-align: center;
-            color: #d32f2f;
-            margin-top: 20px;
+            color: #E74C3C;
+            font-size: 1.2rem;
         }
     </style>
 """, unsafe_allow_html=True)
@@ -89,26 +100,38 @@ st.title("Text Summarization Tool")
 # Description
 st.markdown("""
     <div class="description">
-        This tool allows you to summarize any text you input.
-        Just type or paste your text in the box below, click the "Summarize Text" button, and get the summarized version.
+        This tool allows you to summarize any text you input. 
+        Just type or paste your text in the box on the left, and view the summarized version on the right. Click the "Summarize Text" button at the bottom to generate the summary.
     </div>
 """, unsafe_allow_html=True)
 
-# Text input area for summarization
-input_text = st.text_area("Enter text here:", height=200, placeholder="Type or paste your text here...")
+# Create two columns for input and output
+col1, col2 = st.columns(2)
 
-# When the button is clicked, run prediction
+# Input column
+with col1:
+    st.subheader("Enter Text")
+    input_text = st.text_area("Input your text here:", placeholder="Type or paste your text here...")
+
+# Output column
+with col2:
+    st.subheader("Summarized Text")
+    summary_placeholder = st.empty()  # Placeholder for the output box
+    summary_placeholder.markdown('<div class="output-box"></div>', unsafe_allow_html=True)
+
+# Add a fixed bottom button centered in the container
+st.markdown('<div class="center-button">', unsafe_allow_html=True)
 if st.button("Summarize Text"):
     if input_text.strip():
         try:
             # Predict the summary using your existing pipeline
             obj = PredictionPipeline()
             summary = obj.predict(input_text)
-            
-            # Display the result in a styled output box
-            st.subheader("Summarized Text:")
-            st.markdown(f'<div class="output">{summary}</div>', unsafe_allow_html=True)
+
+            # Update the summary output box
+            summary_placeholder.markdown(f'<div class="output-box">{summary}</div>', unsafe_allow_html=True)
         except Exception as e:
             st.error(f"Error occurred during summarization: {e}")
     else:
         st.warning("Please enter some text to summarize.")
+st.markdown('</div>', unsafe_allow_html=True)
